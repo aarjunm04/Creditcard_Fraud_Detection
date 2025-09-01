@@ -210,3 +210,13 @@ __marimo__/
 data/raw/*
 data/processed/*
 
+# environments & caches
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+**/.DS_Store
+
+# data & artifacts
+data/raw/*.csv
+models/
+reports/
