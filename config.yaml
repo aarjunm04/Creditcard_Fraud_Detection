@@ -1,0 +1,27 @@
+data:
+  raw_csv: "data/raw/creditcard.csv"
+  processed_dir: "data/processed"
+  test_size: 0.2
+  random_state: 42
+
+preprocess:
+  scaler: "standard"         # standard | minmax
+  smote: true
+  smote_sampling_strategy: 0.1
+
+training:
+  xgb:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.05
+  nn:
+    epochs: 20
+    batch_size: 512
+    lr: 1e-3
+    hidden_dims: [128, 64]
+    dropout: 0.2
+  device: "cuda"
+
+artifacts:
+  models_dir: "artifacts/models"
+  reports_dir: "artifacts/reports"

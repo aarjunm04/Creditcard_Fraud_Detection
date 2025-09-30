@@ -1,0 +1,22 @@
+cat <<EOF > .gitignore
+# Ignore virtual environments
+venv/
+.env
+
+# Ignore raw datasets
+data/raw/
+*.csv
+
+# Allow sample datasets
+!data/sample_*.csv
+
+# Ignore Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Ignore system & cache files
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+EOF

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "logreg_balanced",
+    "val_metrics": {
+      "precision_1": 0.06162464985994398,
+      "recall_1": 0.8888888888888888,
+      "f1_1": 0.11525867714472822,
+      "roc_auc": 0.9741109990217496
+    },
+    "test_metrics": {
+      "precision_1": 0.0636168691922802,
+      "recall_1": 0.9081632653061225,
+      "f1_1": 0.11890447561790247,
+      "roc_auc": 0.9715764717535862
+    },
+    "artifacts": {
+      "model_path": "artifacts/models/logreg_balanced.joblib",
+      "pr_path": "artifacts/reports/plots/logreg_balanced_pr.png",
+      "roc_path": "artifacts/reports/plots/logreg_balanced_roc.png",
+      "cal_path": "artifacts/reports/plots/logreg_balanced_cal.png"
+    }
+  },
+  {
+    "name": "hgb",
+    "val_metrics": {
+      "precision_1": 0.425,
+      "recall_1": 0.1717171717171717,
+      "f1_1": 0.24460431654676257,
+      "roc_auc": 0.2691225605686679
+    },
+    "test_metrics": {
+      "precision_1": 0.5106382978723404,
+      "recall_1": 0.24489795918367346,
+      "f1_1": 0.33103448275862074,
+      "roc_auc": 0.3122139612738737
+    },
+    "artifacts": {
+      "model_path": "artifacts/models/hgb.joblib",
+      "pr_path": "artifacts/reports/plots/hgb_pr.png",
+      "roc_path": "artifacts/reports/plots/hgb_roc.png",
+      "cal_path": "artifacts/reports/plots/hgb_cal.png"
+    }
+  },
+  {
+    "name": "xgb_hist",
+    "val_metrics": {
+      "precision_1": 0.8260869565217391,
+      "recall_1": 0.7676767676767676,
+      "f1_1": 0.7958115183246074,
+      "roc_auc": 0.9722056575106889
+    },
+    "test_metrics": {
+      "precision_1": 0.8556701030927835,
+      "recall_1": 0.8469387755102041,
+      "f1_1": 0.8512820512820514,
+      "roc_auc": 0.9712310360272415
+    },
+    "artifacts": {
+      "model_path": "artifacts/models/xgb_hist.joblib",
+      "pr_path": "artifacts/reports/plots/xgb_hist_pr.png",
+      "roc_path": "artifacts/reports/plots/xgb_hist_roc.png",
+      "cal_path": "artifacts/reports/plots/xgb_hist_cal.png"
+    }
+  },
+  {
+    "name": "rf_restricted",
+    "val_metrics": {
+      "precision_1": 0.8875,
+      "recall_1": 0.7171717171717171,
+      "f1_1": 0.7932960893854748,
+      "roc_auc": 0.9675758872512472
+    },
+    "test_metrics": {
+      "precision_1": 0.8735632183908046,
+      "recall_1": 0.7755102040816326,
+      "f1_1": 0.8216216216216217,
+      "roc_auc": 0.9636290275113987
+    },
+    "artifacts": {
+      "model_path": "artifacts/models/rf_restricted.joblib",
+      "pr_path": "artifacts/reports/plots/rf_restricted_pr.png",
+      "roc_path": "artifacts/reports/plots/rf_restricted_roc.png",
+      "cal_path": "artifacts/reports/plots/rf_restricted_cal.png"
+    }
+  }
+]
