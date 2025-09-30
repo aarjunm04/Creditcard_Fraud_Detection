@@ -6,10 +6,9 @@ from pathlib import Path
 from typing import Dict
 
 import matplotlib.pyplot as plt
-import numpy as np
 from sklearn import metrics
-from sklearn.metrics import precision_recall_curve, average_precision_score
 from sklearn.calibration import calibration_curve
+from sklearn.metrics import average_precision_score, precision_recall_curve
 
 from src import logger
 

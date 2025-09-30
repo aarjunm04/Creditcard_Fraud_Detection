@@ -12,16 +12,15 @@ They create small synthetic CSV files in a temporary directory and exercise:
 Uses unittest (compatible with CI in .github/workflows/ci.yml).
 """
 
-import os
 import tempfile
 import unittest
 from pathlib import Path
 
 import pandas as pd
 
+import src.sampling as sampling_module
 # Import modules under test
 from src import data_prep
-import src.sampling as sampling_module
 
 
 class TestDataPrepAndSampling(unittest.TestCase):
@@ -112,7 +111,9 @@ class TestDataPrepAndSampling(unittest.TestCase):
         # Verify sample files contain expected columns
         df_raw_sample = pd.read_csv(sampling_module.SAMPLE_RAW_PATH)
         self.assertIn("Class", df_raw_sample.columns)
-        self.assertLessEqual(len(df_raw_sample), 3 + 1)  # allow small rounding in stratified sampling
+        self.assertLessEqual(
+            len(df_raw_sample), 3 + 1
+        )  # allow small rounding in stratified sampling
 
         df_proc_sample = pd.read_csv(sampling_module.SAMPLE_PROCESSED_PATH)
         self.assertIn("Amount", df_proc_sample.columns)

@@ -1,32 +1,28 @@
 # src/train_model.py
 from __future__ import annotations
+
 import argparse
 from pathlib import Path
+
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-
-from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV, train_test_split
-from sklearn.metrics import classification_report
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.calibration import CalibratedClassifierCV
-
-from imblearn.pipeline import Pipeline as ImbPipeline
 from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.model_selection import (RandomizedSearchCV, StratifiedKFold,
+                                     train_test_split)
+from sklearn.neural_network import MLPClassifier
 
 from src import logger
-from src.data_prep import load_raw, build_preprocessor, get_feature_target
-from src.evaluate import (
-    evaluate_classification,
-    plot_confusion_matrix_save,
-    plot_roc_save,
-    plot_pr_curve_save,
-    plot_calibration_curve_save,
-    save_json,
-    find_best_threshold,
-)
+from src.data_prep import build_preprocessor, get_feature_target, load_raw
+from src.evaluate import (evaluate_classification, find_best_threshold,
+                          plot_calibration_curve_save,
+                          plot_confusion_matrix_save, plot_pr_curve_save,
+                          plot_roc_save, save_json)
 
 # Global settings
 SEED = 42
@@ -185,7 +181,10 @@ def main():
     parser = argparse.ArgumentParser(description="Train and benchmark fraud models.")
     parser.add_argument("--raw_csv", type=str, default="data/raw/creditcard.csv")
     parser.add_argument(
-        "--model", type=str, default="all", choices=["all", "logreg", "rf", "gbdt", "mlp"]
+        "--model",
+        type=str,
+        default="all",
+        choices=["all", "logreg", "rf", "gbdt", "mlp"],
     )
     parser.add_argument("--artifacts_dir", type=str, default="artifacts")
     args = parser.parse_args()

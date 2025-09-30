@@ -29,8 +29,8 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     if "Time" in df.columns:
         df = df.copy()
-        df["Hour"] = (df["Time"] // 3600) % 24   # Hour of day
-        df["Day"] = (df["Time"] // (3600 * 24))  # Day index
+        df["Hour"] = (df["Time"] // 3600) % 24  # Hour of day
+        df["Day"] = df["Time"] // (3600 * 24)  # Day index
     return df
 
 

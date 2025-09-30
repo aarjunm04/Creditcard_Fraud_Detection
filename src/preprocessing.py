@@ -4,8 +4,9 @@ Reusable preprocessing utilities for Credit Card Fraud project.
 Keeps logic separate from data_prep (raw load) and train_model (pipeline).
 """
 
-import joblib
 from pathlib import Path
+
+import joblib
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler
 

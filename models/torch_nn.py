@@ -14,15 +14,15 @@ Designed to plug into the repo's pipeline (expects numpy arrays for X/y).
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
-import torch.nn.functional as F
 
 try:
     from src import logger
@@ -45,7 +45,12 @@ class TrainResult:
 class FraudNet(nn.Module):
     """A simple feed-forward network for tabular fraud detection."""
 
-    def __init__(self, input_dim: int, hidden_dims: Sequence[int] = (128, 64), dropout: float = 0.2):
+    def __init__(
+        self,
+        input_dim: int,
+        hidden_dims: Sequence[int] = (128, 64),
+        dropout: float = 0.2,
+    ):
         super().__init__()
         layers = []
         prev = input_dim
@@ -62,10 +67,17 @@ class FraudNet(nn.Module):
         return self.net(x).squeeze(1)  # returns logits
 
 
-def build_model(input_dim: int, hidden_dims: Sequence[int] = (128, 64), dropout: float = 0.2) -> FraudNet:
+def build_model(
+    input_dim: int, hidden_dims: Sequence[int] = (128, 64), dropout: float = 0.2
+) -> FraudNet:
     """Factory for FraudNet."""
     model = FraudNet(input_dim=input_dim, hidden_dims=hidden_dims, dropout=dropout)
-    logger.info("Built FraudNet: input_dim=%s hidden=%s dropout=%.3f", input_dim, hidden_dims, dropout)
+    logger.info(
+        "Built FraudNet: input_dim=%s hidden=%s dropout=%.3f",
+        input_dim,
+        hidden_dims,
+        dropout,
+    )
     return model
 
 
@@ -115,12 +127,16 @@ def train_nn(
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = None
     if scheduler_step:
-        scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=scheduler_step, gamma=0.5)
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            opt, step_size=scheduler_step, gamma=0.5
+        )
 
     loss_fn = nn.BCEWithLogitsLoss()
 
     train_ds = TensorDataset(_to_tensor(X_train), _to_tensor(y_train))
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=False)
+    train_loader = DataLoader(
+        train_ds, batch_size=batch_size, shuffle=True, drop_last=False
+    )
 
     val_loader = None
     if X_val is not None and y_val is not None:
@@ -160,7 +176,13 @@ def train_nn(
             val_loss = total_val_loss / len(val_loader.dataset)
             history["val_loss"].append(val_loss)
 
-            logger.info("Epoch %d/%d — train_loss=%.6f val_loss=%.6f", epoch, epochs, train_loss, val_loss)
+            logger.info(
+                "Epoch %d/%d — train_loss=%.6f val_loss=%.6f",
+                epoch,
+                epochs,
+                train_loss,
+                val_loss,
+            )
 
             # early stopping
             if val_loss < best_val_loss - 1e-6:
@@ -170,8 +192,14 @@ def train_nn(
                 epochs_no_improve = 0
             else:
                 epochs_no_improve += 1
-                if early_stopping_patience and epochs_no_improve >= early_stopping_patience:
-                    logger.info("Early stopping triggered (patience=%d)", early_stopping_patience)
+                if (
+                    early_stopping_patience
+                    and epochs_no_improve >= early_stopping_patience
+                ):
+                    logger.info(
+                        "Early stopping triggered (patience=%d)",
+                        early_stopping_patience,
+                    )
                     break
         else:
             logger.info("Epoch %d/%d — train_loss=%.6f", epoch, epochs, train_loss)
@@ -187,12 +215,18 @@ def train_nn(
     # load best state back
     if best_state is not None:
         model.load_state_dict({k: v.to(device) for k, v in best_state.items()})
-    logger.info("Training complete. Best epoch=%d best_loss=%.6f", best_epoch, best_val_loss)
+    logger.info(
+        "Training complete. Best epoch=%d best_loss=%.6f", best_epoch, best_val_loss
+    )
 
-    return TrainResult(model=model, history=history, best_epoch=best_epoch, best_val_loss=best_val_loss)
+    return TrainResult(
+        model=model, history=history, best_epoch=best_epoch, best_val_loss=best_val_loss
+    )
 
 
-def evaluate_model(model: nn.Module, X: np.ndarray, device: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray]:
+def evaluate_model(
+    model: nn.Module, X: np.ndarray, device: Optional[str] = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute predicted probabilities and binary predictions for given data.
 
@@ -244,7 +278,11 @@ def load_model(path: Path, device: Optional[str] = None) -> Tuple[nn.Module, Dic
     state_dict = payload["state_dict"]
     # Basic: if metadata contains architecture info, rebuild model
     if "input_dim" in metadata and "hidden_dims" in metadata:
-        model = build_model(int(metadata["input_dim"]), tuple(metadata["hidden_dims"]), float(metadata.get("dropout", 0.2)))
+        model = build_model(
+            int(metadata["input_dim"]),
+            tuple(metadata["hidden_dims"]),
+            float(metadata.get("dropout", 0.2)),
+        )
         model.load_state_dict(state_dict)
         logger.info("Loaded model and rebuilt architecture from metadata.")
         return model, metadata
@@ -253,19 +291,30 @@ def load_model(path: Path, device: Optional[str] = None) -> Tuple[nn.Module, Dic
         model = FraudNet(1)  # placeholder; user should rebuild
         try:
             model.load_state_dict(state_dict)
-            logger.warning("Loaded state_dict into default FraudNet(1). Consider providing metadata to rebuild architecture.")
+            logger.warning(
+                "Loaded state_dict into default FraudNet(1). Consider providing metadata to rebuild architecture."
+            )
         except Exception:
-            logger.warning("Loaded state_dict but failed to map to default architecture; returning raw payload.")
+            logger.warning(
+                "Loaded state_dict but failed to map to default architecture; returning raw payload."
+            )
         return model, metadata
 
 
-def predict_proba(model: nn.Module, X: np.ndarray, device: Optional[str] = None) -> np.ndarray:
+def predict_proba(
+    model: nn.Module, X: np.ndarray, device: Optional[str] = None
+) -> np.ndarray:
     """Convenience wrapper returning positive-class probabilities."""
     probs, _ = evaluate_model(model, X, device=device)
     return probs
 
 
-def predict(model: nn.Module, X: np.ndarray, threshold: float = 0.5, device: Optional[str] = None) -> np.ndarray:
+def predict(
+    model: nn.Module,
+    X: np.ndarray,
+    threshold: float = 0.5,
+    device: Optional[str] = None,
+) -> np.ndarray:
     """Convenience wrapper returning binary predictions using a threshold on predicted probabilities."""
     probs = predict_proba(model, X, device=device)
     return (probs >= threshold).astype(int)

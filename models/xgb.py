@@ -13,19 +13,21 @@ This file is intentionally self-contained and returns sklearn-compatible objects
 """
 
 from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
 
 import joblib
 import numpy as np
+from sklearn.metrics import (classification_report, f1_score, precision_score,
+                             recall_score, roc_auc_score)
 from xgboost import XGBClassifier
-from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score, classification_report
 
 try:
     from src import logger
 except Exception:
     # fallback if imported standalone
     import logging
+
     logger = logging.getLogger("xgb_wrapper")
     logging.basicConfig(level=logging.INFO)
 
@@ -61,7 +63,10 @@ def build_xgb(params: Optional[Dict[str, Any]] = None) -> XGBClassifier:
     if params:
         cfg.update(params)
     model = XGBClassifier(**cfg)
-    logger.info("Built XGBClassifier with params: %s", {k: cfg[k] for k in ("n_estimators", "max_depth", "learning_rate") if k in cfg})
+    logger.info(
+        "Built XGBClassifier with params: %s",
+        {k: cfg[k] for k in ("n_estimators", "max_depth", "learning_rate") if k in cfg},
+    )
     return model
 
 
@@ -89,7 +94,9 @@ def train_xgb(
     """
     fit_kwargs = fit_kwargs or {}
     if X_val is not None and y_val is not None and early_stopping_rounds:
-        logger.info("Training XGB with early stopping (rounds=%s)", early_stopping_rounds)
+        logger.info(
+            "Training XGB with early stopping (rounds=%s)", early_stopping_rounds
+        )
         model.fit(
             X_train,
             y_train,
@@ -104,7 +111,9 @@ def train_xgb(
     return model
 
 
-def evaluate_model_predictions(y_true: np.ndarray, y_proba: np.ndarray, threshold: float = 0.5) -> Dict[str, Any]:
+def evaluate_model_predictions(
+    y_true: np.ndarray, y_proba: np.ndarray, threshold: float = 0.5
+) -> Dict[str, Any]:
     """
     Compute basic evaluation metrics for binary classification (fraud is positive class).
 
@@ -125,7 +134,13 @@ def evaluate_model_predictions(y_true: np.ndarray, y_proba: np.ndarray, threshol
     except Exception:
         roc = float("nan")
     rpt = classification_report(y_true, y_pred, digits=4)
-    return {"precision": float(prec), "recall": float(rec), "f1": float(f1), "roc_auc": float(roc), "report": rpt}
+    return {
+        "precision": float(prec),
+        "recall": float(rec),
+        "f1": float(f1),
+        "roc_auc": float(roc),
+        "report": rpt,
+    }
 
 
 def save_model(model: XGBClassifier, path: str | Path):
@@ -184,8 +199,7 @@ def tune_xgb_optuna(
     """
     try:
         import optuna
-        from sklearn.model_selection import StratifiedKFold
-        from sklearn.model_selection import cross_val_score
+        from sklearn.model_selection import StratifiedKFold, cross_val_score
     except Exception as e:
         raise RuntimeError("optuna (or sklearn) is required for tune_xgb_optuna") from e
 
@@ -203,12 +217,16 @@ def tune_xgb_optuna(
             "n_jobs": -1,
         }
         clf = XGBClassifier(**params)
-        skf = StratifiedKFold(n_splits=cv_splits, shuffle=True, random_state=random_state)
+        skf = StratifiedKFold(
+            n_splits=cv_splits, shuffle=True, random_state=random_state
+        )
         # use cross_val_score on roc_auc as a proxy; for F1 you'd need custom scorer with probabilities/thresholding
         scores = cross_val_score(clf, X, y, cv=skf, scoring="roc_auc", n_jobs=-1)
         return float(scores.mean())
 
-    study = optuna.create_study(direction=direction, sampler=optuna.samplers.TPESampler(seed=random_state))
+    study = optuna.create_study(
+        direction=direction, sampler=optuna.samplers.TPESampler(seed=random_state)
+    )
     study.optimize(objective, n_trials=n_trials)
     logger.info("Optuna tuning completed. Best value: %s", study.best_value)
     return study.best_params

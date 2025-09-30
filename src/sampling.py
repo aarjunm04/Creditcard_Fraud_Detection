@@ -4,7 +4,9 @@ Utility for creating lightweight sample datasets for demos (e.g., GitHub CI, qui
 """
 
 from pathlib import Path
+
 import pandas as pd
+
 from src import logger
 
 # Paths
@@ -32,7 +34,10 @@ def create_samples(n: int = 500, stratify: bool = True):
         # stratified sample (preserves fraud ratio)
         sample_df = (
             df.groupby("Class", group_keys=False)
-            .apply(lambda x: x.sample(int(len(x) / len(df) * n), random_state=42), include_groups=False)
+            .apply(
+                lambda x: x.sample(int(len(x) / len(df) * n), random_state=42),
+                include_groups=False,
+            )
             .reset_index(drop=True)
         )
         logger.info("✂️ Stratified sampling applied.")

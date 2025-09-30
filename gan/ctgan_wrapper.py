@@ -9,6 +9,7 @@ Provides:
 """
 
 from pathlib import Path
+
 import joblib
 import pandas as pd
 from ctgan import CTGAN
@@ -17,11 +18,14 @@ try:
     from src import logger
 except Exception:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("ctgan_wrapper")
 
 
-def train_ctgan(df: pd.DataFrame, discrete_columns: list[str], epochs: int = 10) -> CTGAN:
+def train_ctgan(
+    df: pd.DataFrame, discrete_columns: list[str], epochs: int = 10
+) -> CTGAN:
     """
     Train CTGAN on given dataframe.
 
@@ -34,7 +38,9 @@ def train_ctgan(df: pd.DataFrame, discrete_columns: list[str], epochs: int = 10)
         trained CTGAN instance
     """
     model = CTGAN(epochs=epochs, batch_size=500, verbose=True)
-    logger.info("🚀 Training CTGAN with epochs=%s, discrete=%s", epochs, discrete_columns)
+    logger.info(
+        "🚀 Training CTGAN with epochs=%s, discrete=%s", epochs, discrete_columns
+    )
     model.fit(df, discrete_columns)
     logger.info("✅ CTGAN training complete")
     return model

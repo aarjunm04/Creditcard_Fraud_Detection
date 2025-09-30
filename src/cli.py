@@ -7,12 +7,12 @@ Usage:
     python -m src.cli app           # Launch Streamlit demo app
 """
 
-import click
 import subprocess
 import sys
-from pathlib import Path
 
-from src import logger, __version__
+import click
+
+from src import __version__, logger
 
 
 @click.group()
@@ -27,7 +27,9 @@ def cli():
 def train(config):
     """Train models (XGBoost + Neural Net)."""
     logger.info("Starting training...")
-    subprocess.run([sys.executable, "src/train_model.py", "--config", config], check=True)
+    subprocess.run(
+        [sys.executable, "src/train_model.py", "--config", config], check=True
+    )
 
 
 @cli.command()

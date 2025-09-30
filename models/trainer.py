@@ -16,17 +16,21 @@ Intended usage (examples):
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from pathlib import Path
+
 import json
 import time
-from typing import Dict, Optional, Tuple, Sequence
+from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from models.xgb import build_xgb, train_xgb, evaluate_model_predictions, save_model as save_xgb
-from models.torch_nn import build_model, train_nn, save_model as save_torch, evaluate_model
+from models.torch_nn import build_model, evaluate_model
+from models.torch_nn import save_model as save_torch
+from models.torch_nn import train_nn
+from models.xgb import build_xgb, evaluate_model_predictions
+from models.xgb import save_model as save_xgb
+from models.xgb import train_xgb
 
 try:
     from src import logger
@@ -111,7 +115,12 @@ class Trainer:
         metrics_payload["train_time_seconds"] = time.time() - t0
         metrics_path.write_text(json.dumps(metrics_payload, indent=2))
 
-        logger.info("XGB training complete (%s). F1=%.4f roc_auc=%.4f", name, metrics["f1"], metrics["roc_auc"])
+        logger.info(
+            "XGB training complete (%s). F1=%.4f roc_auc=%.4f",
+            name,
+            metrics["f1"],
+            metrics["roc_auc"],
+        )
         return metrics_payload
 
     # -------------------------
@@ -141,9 +150,17 @@ class Trainer:
         batch_size = batch_size or self.cfg.torch_batch_size
         lr = lr or self.cfg.torch_lr
 
-        logger.info("Starting Torch training (%s) epochs=%s batch_size=%s lr=%s", name, epochs, batch_size, lr)
+        logger.info(
+            "Starting Torch training (%s) epochs=%s batch_size=%s lr=%s",
+            name,
+            epochs,
+            batch_size,
+            lr,
+        )
         input_dim = int(X_train.shape[1])
-        model = build_model(input_dim=input_dim, hidden_dims=hidden_dims, dropout=dropout)
+        model = build_model(
+            input_dim=input_dim, hidden_dims=hidden_dims, dropout=dropout
+        )
 
         train_res = train_nn(
             model,
@@ -170,9 +187,12 @@ class Trainer:
             "roc_auc": float(np.nan),
         }
         try:
-            from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
+            from sklearn.metrics import (f1_score, precision_score,
+                                         recall_score, roc_auc_score)
 
-            metrics["precision"] = float(precision_score(eval_y, preds, zero_division=0))
+            metrics["precision"] = float(
+                precision_score(eval_y, preds, zero_division=0)
+            )
             metrics["recall"] = float(recall_score(eval_y, preds, zero_division=0))
             metrics["f1"] = float(f1_score(eval_y, preds, zero_division=0))
             metrics["roc_auc"] = float(roc_auc_score(eval_y, proba))
@@ -181,33 +201,52 @@ class Trainer:
 
         # Save model (state_dict + metadata)
         model_path = self.models_dir / f"{name}.pt"
-        metadata = {"input_dim": input_dim, "hidden_dims": tuple(hidden_dims), "dropout": float(dropout)}
+        metadata = {
+            "input_dim": input_dim,
+            "hidden_dims": tuple(hidden_dims),
+            "dropout": float(dropout),
+        }
         save_torch(train_res.model, model_path, metadata=metadata)
 
         # Save metrics & history
         metrics_payload = {"model": name, "framework": "torch", "metrics": metrics}
         metrics_payload["train_time_seconds"] = time.time() - t0
         metrics_payload["history"] = train_res.history
-        (self.reports_dir / f"{name}_metrics.json").write_text(json.dumps(metrics_payload, indent=2))
+        (self.reports_dir / f"{name}_metrics.json").write_text(
+            json.dumps(metrics_payload, indent=2)
+        )
 
-        logger.info("Torch training complete (%s). F1=%.4f roc_auc=%.4f", name, metrics["f1"], metrics["roc_auc"])
+        logger.info(
+            "Torch training complete (%s). F1=%.4f roc_auc=%.4f",
+            name,
+            metrics["f1"],
+            metrics["roc_auc"],
+        )
         return metrics_payload
 
     # -------------------------
     # Convenience: train both with a simple split
     # -------------------------
-    def train_both_with_split(self, X: np.ndarray, y: np.ndarray, test_size: float = 0.2, seed: int = 42):
+    def train_both_with_split(
+        self, X: np.ndarray, y: np.ndarray, test_size: float = 0.2, seed: int = 42
+    ):
         """
         Convenience method: split dataset and run both XGB and Torch training with same split.
         Saves artifacts under artifacts/models and artifacts/reports.
         """
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=y, random_state=seed)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, stratify=y, random_state=seed
+        )
 
         # Train XGB with validation
-        xgb_metrics = self.train_xgb(X_train, y_train, X_val=X_test, y_val=y_test, name="xgb_auto")
+        xgb_metrics = self.train_xgb(
+            X_train, y_train, X_val=X_test, y_val=y_test, name="xgb_auto"
+        )
 
         # Train Torch with validation
-        torch_metrics = self.train_torch(X_train, y_train, X_val=X_test, y_val=y_test, name="torch_auto")
+        torch_metrics = self.train_torch(
+            X_train, y_train, X_val=X_test, y_val=y_test, name="torch_auto"
+        )
 
         return {"xgb": xgb_metrics, "torch": torch_metrics}
 
@@ -245,9 +284,19 @@ def _cli_main():
 
     trainer = Trainer()
     if args.mode == "xgb":
-        trainer.train_xgb(*train_test_split(X, y, test_size=args.test_size, random_state=args.seed)[:2], name="xgb_cli")
+        trainer.train_xgb(
+            *train_test_split(X, y, test_size=args.test_size, random_state=args.seed)[
+                :2
+            ],
+            name="xgb_cli",
+        )
     elif args.mode == "torch":
-        trainer.train_torch(*train_test_split(X, y, test_size=args.test_size, random_state=args.seed)[:2], name="torch_cli")
+        trainer.train_torch(
+            *train_test_split(X, y, test_size=args.test_size, random_state=args.seed)[
+                :2
+            ],
+            name="torch_cli",
+        )
     else:
         trainer.train_both_with_split(X, y, test_size=args.test_size, seed=args.seed)
 
