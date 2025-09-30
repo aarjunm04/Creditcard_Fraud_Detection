@@ -15,15 +15,15 @@ from src import logger
 
 def evaluate_classification(y_true, y_proba, threshold: float = 0.5) -> Dict:
     """
-    Evaluate binary classification metrics at a given probability threshold.
+     Evaluate binary classification metrics at a given probability threshold.
 
-    Args:
-        y_true (array-like): Ground truth labels.
-        y_proba (array-like): Predicted probabilities (for positive class).
-        threshold (float): Decision threshold (default=0.5).
+     Args:
+         y_true (array-like): Ground truth labels.
+         y_proba (array-like): Predicted probabilities (for positive class).
+         threshold (float): Decision threshold (default=0.5).
 
     Returns:
-        Dict: Metrics dictionary including precision, recall, f1, roc_auc, and confusion matrix.
+     precision, recall, f1, roc_auc, and confusion matrix.
     """
     y_pred = (y_proba >= threshold).astype(int)
     precision = metrics.precision_score(y_true, y_pred, zero_division=0)
@@ -33,7 +33,8 @@ def evaluate_classification(y_true, y_proba, threshold: float = 0.5) -> Dict:
     cm = metrics.confusion_matrix(y_true, y_pred).tolist()
 
     logger.info(
-        f"✅ Eval @thr={threshold:.2f} | Precision={precision:.4f}, Recall={recall:.4f}, "
+        f"✅ Eval @thr={threshold:.2f} | "
+        f"Precision={precision:.4f}, Recall={recall:.4f}, "
         f"F1={f1:.4f}, ROC-AUC={roc_auc:.4f}"
     )
     return {
@@ -48,9 +49,6 @@ def evaluate_classification(y_true, y_proba, threshold: float = 0.5) -> Dict:
 
 def plot_confusion_matrix_save(y_true, y_pred, out_path: Path, normalize: bool = False):
     """Save confusion matrix plot."""
-    disp = metrics.ConfusionMatrixDisplay.from_predictions(
-        y_true, y_pred, normalize="true" if normalize else None
-    )
     plt.title("Confusion Matrix" + (" (Normalized)" if normalize else ""))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(out_path, bbox_inches="tight", dpi=160)
