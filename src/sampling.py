@@ -1,49 +1,92 @@
+# src/sampling.py
 from pathlib import Path
 import pandas as pd
+import numpy as np
+from typing import Optional
 
+# Default paths (tests may override these at runtime)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SAMPLE_RAW_PATH = PROJECT_ROOT / "data" / "raw" / "sample_raw.csv"
-SAMPLE_PROCESSED_PATH = PROJECT_ROOT / "data" / "processed" / "sample_processed.csv"
+RAW_DATA_PATH: Optional[Path] = PROJECT_ROOT / "data" / "raw" / "sample_raw.csv"
+SAMPLE_RAW_PATH: Path = PROJECT_ROOT / "data" / "raw" / "sample_raw.csv"
+SAMPLE_PROCESSED_PATH: Path = PROJECT_ROOT / "data" / "processed" / "sample_processed.csv"
+
+
+def _find_source_path() -> Optional[Path]:
+    """
+    Determine the source/raw CSV path to use.
+    Priority:
+    1) If the module-level RAW_DATA_PATH is set and exists -> use it.
+    2) SAMPLE_RAW_PATH if exists.
+    3) creditcard.csv in data/raw/
+    4) None if nothing found.
+    """
+    # Respect any runtime override to RAW_DATA_PATH
+    global RAW_DATA_PATH, SAMPLE_RAW_PATH
+    if RAW_DATA_PATH and Path(RAW_DATA_PATH).exists():
+        return Path(RAW_DATA_PATH)
+
+    if SAMPLE_RAW_PATH and Path(SAMPLE_RAW_PATH).exists():
+        return Path(SAMPLE_RAW_PATH)
+
+    fallback = PROJECT_ROOT / "data" / "raw" / "creditcard.csv"
+    if fallback.exists():
+        return fallback
+
+    return None
+
 
 def create_samples(n: int = 100, random_state: int = 42) -> None:
     """
-    Create small sample CSVs used by tests/CI. Keeps the 'Class' label column
-    (if present) and writes with index=False so columns remain exact.
+    Create small sample CSVs used by tests/CI. Keeps the 'Class' label column.
+    If no raw dataset is found, bootstrap a small synthetic one (safe for CI).
+    This function respects runtime overrides of RAW_DATA_PATH, SAMPLE_RAW_PATH,
+    and SAMPLE_PROCESSED_PATH (tests set these directly).
     """
-    # read raw (fall back to creditcard.csv if sample not present)
-    raw_candidates = [
-        PROJECT_ROOT / "data" / "raw" / "sample_raw.csv",
-        PROJECT_ROOT / "data" / "raw" / "creditcard.csv",
-    ]
-    src_path = next((p for p in raw_candidates if p.exists()), None)
-    if src_path is None:
-        raise FileNotFoundError("No raw dataset found for sampling (data/raw/*.csv).")
+    rng = np.random.default_rng(random_state)
 
-    df = pd.read_csv(src_path)
+    # Resolve final paths (tests may have reassigned these module globals)
+    src_path = _find_source_path()
 
-    # If dataset missing 'Class', try to infer or add placeholder (tests expect Class)
+    if src_path is not None:
+        df = pd.read_csv(src_path)
+    else:
+        # Bootstrap tiny synthetic data for CI environments
+        cols = ["Time"] + [f"V{i}" for i in range(1, 29 if False else 4)] + ["Amount", "Class"]
+        # Here we default to a small set of V1..V3 for speed in CI
+        df = pd.DataFrame({
+            "Time": rng.integers(0, 1000, size=n),
+            "V1": rng.normal(0, 1, size=n),
+            "V2": rng.normal(0, 1, size=n),
+            "V3": rng.normal(0, 1, size=n),
+            "Amount": rng.uniform(1, 500, size=n),
+            "Class": rng.integers(0, 2, size=n),
+        })
+
+    # Ensure 'Class' column exists
     if "Class" not in df.columns:
-        # If there's a label column under other names, try common alternatives (none found -> set zeros)
         df["Class"] = 0
 
-    # Stratified-ish sampling: preserve class ratio if possible
-    try:
-        df_sample = (
-            df.groupby("Class", group_keys=False)
-            .apply(lambda g: g.sample(max(1, int(len(g) / len(df) * n)), random_state=random_state))
-            .reset_index(drop=True)
-        )
-    except Exception:
-        # fallback to simple sample
+    # Create a stratified-ish sample preserving class ratios when possible
+    if "Class" in df.columns:
+        try:
+            df_sample = (
+                df.groupby("Class", group_keys=False)
+                .apply(lambda g: g.sample(max(1, int(len(g) / len(df) * n)), random_state=random_state))
+                .reset_index(drop=True)
+            )
+        except Exception:
+            df_sample = df.sample(n=min(n, len(df)), random_state=random_state).reset_index(drop=True)
+    else:
         df_sample = df.sample(n=min(n, len(df)), random_state=random_state).reset_index(drop=True)
 
-    # Ensure Class column exists and order columns consistently
-    cols = list(df_sample.columns)
-    if "Class" in cols:
-        cols = [c for c in cols if c != "Class"] + ["Class"]  # put Class last (or adjust as you prefer)
+    # Reorder columns: put 'Class' at the end for consistency with tests
+    if "Class" in df_sample.columns:
+        cols = [c for c in df_sample.columns if c != "Class"] + ["Class"]
         df_sample = df_sample[cols]
 
-    # Create parent dirs if needed and write without index so tests can assert columns list
-    SAMPLE_PROCESSED_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure directories exist and write with index=False
+    Path(SAMPLE_RAW_PATH).parent.mkdir(parents=True, exist_ok=True)
+    Path(SAMPLE_PROCESSED_PATH).parent.mkdir(parents=True, exist_ok=True)
     df_sample.to_csv(SAMPLE_RAW_PATH, index=False)
     df_sample.to_csv(SAMPLE_PROCESSED_PATH, index=False)
+
