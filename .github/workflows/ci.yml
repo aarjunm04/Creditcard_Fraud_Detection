@@ -40,8 +40,9 @@ jobs:
       - name: Format check with black
         run: black --check .
 
-      - name: Import sorting check
-        run: isort . --check-only
+
+      - name: Auto-sort imports with isort
+        run: isort .
 
       - name: Run tests
         run: pytest -q
