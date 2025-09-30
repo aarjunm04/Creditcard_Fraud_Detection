@@ -13,13 +13,18 @@ This file is intentionally self-contained and returns sklearn-compatible objects
 """
 
 from __future__ import annotations
-
+from typing import Any, Dict
 from pathlib import Path
 
 import joblib
 import numpy as np
-from sklearn.metrics import (classification_report, f1_score, precision_score,
-                             recall_score, roc_auc_score)
+from sklearn.metrics import (
+    classification_report,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from xgboost import XGBClassifier
 
 try:
@@ -220,7 +225,6 @@ def tune_xgb_optuna(
         skf = StratifiedKFold(
             n_splits=cv_splits, shuffle=True, random_state=random_state
         )
-        # use cross_val_score on roc_auc as a proxy; for F1 you'd need custom scorer with probabilities/thresholding
         scores = cross_val_score(clf, X, y, cv=skf, scoring="roc_auc", n_jobs=-1)
         return float(scores.mean())
 

@@ -13,16 +13,24 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from sklearn.model_selection import (RandomizedSearchCV, StratifiedKFold,
-                                     train_test_split)
+from sklearn.model_selection import (
+    RandomizedSearchCV,
+    StratifiedKFold,
+    train_test_split,
+)
 from sklearn.neural_network import MLPClassifier
 
 from src import logger
 from src.data_prep import build_preprocessor, get_feature_target, load_raw
-from src.evaluate import (evaluate_classification, find_best_threshold,
-                          plot_calibration_curve_save,
-                          plot_confusion_matrix_save, plot_pr_curve_save,
-                          plot_roc_save, save_json)
+from src.evaluate import (
+    evaluate_classification,
+    find_best_threshold,
+    plot_calibration_curve_save,
+    plot_confusion_matrix_save,
+    plot_pr_curve_save,
+    plot_roc_save,
+    save_json,
+)
 
 # Global settings
 SEED = 42

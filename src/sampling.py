@@ -1,7 +1,4 @@
 # src/sampling.py
-"""
-Utility for creating lightweight sample datasets for demos (e.g., GitHub CI, quick tests).
-"""
 
 from pathlib import Path
 

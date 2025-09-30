@@ -187,8 +187,12 @@ class Trainer:
             "roc_auc": float(np.nan),
         }
         try:
-            from sklearn.metrics import (f1_score, precision_score,
-                                         recall_score, roc_auc_score)
+            from sklearn.metrics import (
+                f1_score,
+                precision_score,
+                recall_score,
+                roc_auc_score,
+            )
 
             metrics["precision"] = float(
                 precision_score(eval_y, preds, zero_division=0)

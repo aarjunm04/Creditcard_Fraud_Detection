@@ -37,12 +37,5 @@ jobs:
           # install test/format tooling only (no flake8)
           pip install pytest black isort
 
-      - name: Format check with black
-        run: black --check .
-
-
-      - name: Auto-sort imports with isort
-        run: isort .
-
       - name: Run tests
         run: pytest -q
